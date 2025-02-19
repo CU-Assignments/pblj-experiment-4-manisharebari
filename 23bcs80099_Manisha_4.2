@@ -1,0 +1,63 @@
+package Java_LAb;
+import java.util.concurrent.locks.*;
+
+class TicketBookingSystem {
+    private int availableSeats;
+    private final Lock lock = new ReentrantLock();
+
+    public TicketBookingSystem(int seats) {
+        this.availableSeats = seats;
+    }
+
+    public void bookTicket(String customerType, int seatsRequested) {
+        lock.lock();
+        try {
+            if (availableSeats >= seatsRequested) {
+                System.out.println(customerType + " successfully booked " + seatsRequested + " seat(s). Remaining: " + (availableSeats - seatsRequested));
+                availableSeats -= seatsRequested;
+            } else {
+                System.out.println(customerType + " booking failed. Not enough seats available.");
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+class BookingThread extends Thread {
+    private TicketBookingSystem system;
+    private String customerType;
+    private int seatsRequested;
+
+    public BookingThread(TicketBookingSystem system, String customerType, int seatsRequested, int priority) {
+        this.system = system;
+        this.customerType = customerType;
+        this.seatsRequested = seatsRequested;
+        setPriority(priority);
+    }
+
+    @Override
+    public void run() {
+        system.bookTicket(customerType, seatsRequested);
+    }
+}
+
+public class TicketBookingApp {
+    public static void main(String[] args) {
+        TicketBookingSystem system = new TicketBookingSystem(10);
+
+        // Creating threads for different booking types
+        BookingThread vip1 = new BookingThread(system, "VIP Customer 1", 2, Thread.MAX_PRIORITY);
+        BookingThread vip2 = new BookingThread(system, "VIP Customer 2", 3, Thread.MAX_PRIORITY);
+        BookingThread regular1 = new BookingThread(system, "Regular Customer 1", 4, Thread.NORM_PRIORITY);
+        BookingThread regular2 = new BookingThread(system, "Regular Customer 2", 2, Thread.NORM_PRIORITY);
+        BookingThread regular3 = new BookingThread(system, "Regular Customer 3", 1, Thread.MIN_PRIORITY);
+
+        // Starting threads
+        vip1.start();
+        vip2.start();
+        regular1.start();
+        regular2.start();
+        regular3.start();
+    }
+}
